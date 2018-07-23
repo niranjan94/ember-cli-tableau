@@ -48,12 +48,12 @@ Contributing
 
 * `git clone <repository-url>`
 * `cd ember-cli-tableau`
-* `npm install`
+* `yarn install`
 
 ### Linting
 
-* `npm run lint:js`
-* `npm run lint:js -- --fix`
+* `yarn lint:js`
+* `yarn lint:js -- --fix`
 
 ### Running tests
 
