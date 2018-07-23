@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/niranjan94/ember-cli-tableau.svg?branch=master)](https://travis-ci.com/niranjan94/ember-cli-tableau)
+
 ember-cli-tableau
 ==============================================================================
 
