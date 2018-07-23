@@ -1,0 +1,1 @@
+export { default } from 'ember-cli-tableau/components/tableau-view';
