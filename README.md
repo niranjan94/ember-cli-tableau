@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.com/niranjan94/ember-cli-tableau.svg?branch=master)](https://travis-ci.com/niranjan94/ember-cli-tableau)
+[![Build Status](https://travis-ci.com/niranjan94/ember-cli-tableau.svg?branch=master)](https://travis-ci.com/niranjan94/ember-cli-tableau) 
+[![npm](https://img.shields.io/npm/v/ember-cli-tableau.svg)](https://www.npmjs.com/package/ember-cli-tableau)
+
 
 ember-cli-tableau
 ==============================================================================
