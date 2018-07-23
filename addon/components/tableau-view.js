@@ -27,7 +27,7 @@ export default Component.extend({
     }
   },
 
-  didReceiveAttrs() {
+  didRender() {
     this._super(...arguments);
     this._dispose();
 
