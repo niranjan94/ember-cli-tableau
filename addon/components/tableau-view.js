@@ -2,11 +2,15 @@ import Component from '@ember/component';
 import layout from '../templates/components/tableau-view';
 import { computed } from '@ember/object';
 import { getOwner } from '@ember/application';
+import { merge } from '@ember/polyfills';
+import { next, later } from '@ember/runloop';
 
 export default Component.extend({
   layout,
 
   classNames: ['tableau-view'],
+
+  _resizeRetryCount: 0,
 
   _config: computed(function () {
     return getOwner(this).resolveRegistration('config:environment');
@@ -20,6 +24,34 @@ export default Component.extend({
     return server;
   }),
 
+  _options: computed('options', function () {
+    const options = {
+      onFirstVizSizeKnown: () => {
+        later(() => {
+          this._resize(this.$().width(), this.$().height() + 20);
+        }, 2000);
+      }
+    };
+    merge(options, this.get('options') || {});
+    return options;
+  }),
+
+  _resize(width, height) {
+    const viz = this.get('_vizInstance');
+    const retryCount = this.get('_resizeRetryCount');
+    if (!viz || retryCount >= 2) {
+      return;
+    }
+    try {
+      viz.setFrameSize(width, height);
+    } catch (e) {
+      this.set('_resizeRetryCount', retryCount + 1);
+      later(() => {
+        this._resize(width, height);
+      }, 1500);
+    }
+  },
+
   _dispose() {
     const vizInstance = this.get('_vizInstance');
     if (vizInstance) {
@@ -27,7 +59,7 @@ export default Component.extend({
     }
   },
 
-  didRender() {
+  didInsertElement() {
     this._super(...arguments);
     this._dispose();
 
@@ -44,7 +76,7 @@ export default Component.extend({
       new tableau.Viz(
         this.get('element'),
         url,
-        this.get('options')
+        this.get('_options')
       )
     );
   },
