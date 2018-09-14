@@ -47,9 +47,8 @@ export default Component.extend({
     }
     try {
       viz.setFrameSize(width, height);
-
       try {
-        var sheet = viz.getWorkbook().getActiveSheet();
+        const sheet = viz.getWorkbook().getActiveSheet();
         sheet.changeSizeAsync(
           {"behavior": "EXACTLY", "maxSize": { "height": height, "width": width }})
           .then(viz.setFrameSize(parseInt(width, 10), parseInt(height, 10)));
