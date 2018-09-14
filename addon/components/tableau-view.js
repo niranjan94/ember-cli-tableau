@@ -30,6 +30,9 @@ export default Component.extend({
         later(() => {
           this._resize(this.$().width(), this.$().height() + 20);
         }, 2000);
+      },
+      onFirstInteractive: () => {
+        this._addEvents();
       }
     };
     merge(options, this.get('options') || {});
@@ -44,12 +47,33 @@ export default Component.extend({
     }
     try {
       viz.setFrameSize(width, height);
+
+      try {
+        var sheet = viz.getWorkbook().getActiveSheet();
+        sheet.changeSizeAsync(
+          {"behavior": "EXACTLY", "maxSize": { "height": height, "width": width }})
+          .then(viz.setFrameSize(parseInt(width, 10), parseInt(height, 10)));
+      } catch (e) {
+        console.error(e);
+      }
     } catch (e) {
       this.set('_resizeRetryCount', retryCount + 1);
       later(() => {
         this._resize(width, height);
       }, 1500);
     }
+  },
+
+  _addEvents() {
+    const viz = this.get('_vizInstance');
+    if (!viz) {
+      return;
+    }
+    viz.addEventListener('tabSwitch', () => {
+      later(() => {
+        this._resize(this.$().width(), this.$().height() + 20);
+      }, 500);
+    });
   },
 
   _dispose() {
