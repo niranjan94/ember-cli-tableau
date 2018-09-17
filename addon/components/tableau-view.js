@@ -28,7 +28,7 @@ export default Component.extend({
     const options = {
       onFirstVizSizeKnown: () => {
         later(() => {
-          this._resize(this.$().width(), this.$().height() + 20);
+          this._resize(this.$().width(), this.$().height());
         }, 2000);
       },
       onFirstInteractive: () => {
@@ -50,8 +50,8 @@ export default Component.extend({
       try {
         const sheet = viz.getWorkbook().getActiveSheet();
         sheet.changeSizeAsync(
-          {"behavior": "EXACTLY", "maxSize": { "height": height, "width": width }})
-          .then(viz.setFrameSize(parseInt(width, 10), parseInt(height, 10)));
+          {"behavior": "EXACTLY", "maxSize": { "height": height - 80, "width": width }})
+          .then(viz.setFrameSize(width, height));
       } catch (e) {
         console.error(e);
       }
@@ -70,7 +70,7 @@ export default Component.extend({
     }
     viz.addEventListener('tabSwitch', () => {
       later(() => {
-        this._resize(this.$().width(), this.$().height() + 20);
+        this._resize(this.$().width(), this.$().height());
       }, 500);
     });
   },
