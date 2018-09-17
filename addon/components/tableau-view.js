@@ -26,13 +26,19 @@ export default Component.extend({
 
   _options: computed('options', function () {
     const options = {
-      onFirstVizSizeKnown: () => {
+      onFirstVizSizeKnown: (e) => {
         later(() => {
           this._resize(this.$().width(), this.$().height());
         }, 2000);
+        if (this.get('onFirstVizSizeKnown')) {
+          this.get('onFirstVizSizeKnown')(e);
+        }
       },
-      onFirstInteractive: () => {
+      onFirstInteractive: (e) => {
         this._addEvents();
+        if (this.get('onFirstInteractive')) {
+          this.get('onFirstInteractive')(e);
+        }
       }
     };
     merge(options, this.get('options') || {});
