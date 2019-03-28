@@ -3,14 +3,17 @@ import layout from '../templates/components/tableau-view';
 import { computed } from '@ember/object';
 import { getOwner } from '@ember/application';
 import { merge } from '@ember/polyfills';
-import { next, later } from '@ember/runloop';
+import { later } from '@ember/runloop';
+import loadScript from '../utils/load-script';
 
 export default Component.extend({
   layout,
 
   classNames: ['tableau-view'],
+  classNameBindings: ['_isLoading:loading'],
 
   _resizeRetryCount: 0,
+  _isLoading: true,
 
   _config: computed(function () {
     return getOwner(this).resolveRegistration('config:environment');
@@ -88,26 +91,34 @@ export default Component.extend({
     }
   },
 
-  didInsertElement() {
+  async didInsertElement() {
     this._super(...arguments);
+    this.set('_isLoading', true);
+    if (!this.get('_config.tableau.eagerLoad')) {
+      await loadScript(`${this.get('_server')}/javascripts/api/tableau-2.min.js`);
+    }
     this._dispose();
-
     const viewPath = this.get('viewPath') || `${this.get('workbook')}/${this.get('view')}`;
-
     let url = `${this.get('_server')}/views/${viewPath}`;
-
     if (this.get('token')) {
       url = `${this.get('_server')}/trusted/${this.get('token')}/views/${viewPath}`;
     }
-
     this.set(
       '_vizInstance',
-      new tableau.Viz(
+      new window.tableau.Viz(
         this.get('element'),
         url,
         this.get('_options')
       )
     );
+    this.setProperties({
+      _vizInstance: new window.tableau.Viz(
+        this.get('element'),
+        url,
+        this.get('_options')
+      ),
+      _isLoading: false
+    })
   },
 
   willDestroyElement() {
