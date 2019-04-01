@@ -5,6 +5,57 @@ import { getOwner } from '@ember/application';
 import { merge } from '@ember/polyfills';
 import { later } from '@ember/runloop';
 import loadScript from '../utils/load-script';
+import { Promise as EmberPromise } from 'rsvp';
+
+const scriptVersionRegex = /tableau-[\d.]+min.js/gm;
+
+/**
+ * Make a simple GET Request and return the response as string.
+ *
+ * @param scriptUrl
+ * @return {Promise}
+ * @private
+ */
+function _makeGetRequest(scriptUrl) {
+  return new EmberPromise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', scriptUrl, true);
+    xhr.responseType = 'text';
+    xhr.onload = function () {
+      if (xhr.readyState === xhr.DONE) {
+        if (xhr.status === 200) {
+          return resolve(xhr.responseText);
+        }
+      }
+      reject(...arguments);
+    };
+    xhr.onerror = function() {
+      reject(...arguments);
+    };
+    xhr.send(null);
+  });
+}
+
+/**
+ * Parse the base script and get the final match.
+ *
+ * @param baseScript
+ * @return {*}
+ * @private
+ */
+function _getLatestVersionFromBaseScript(baseScript) {
+  let m;
+  let recentMatch = null;
+  while ((m = scriptVersionRegex.exec(baseScript)) !== null) {
+    if (m.index === scriptVersionRegex.lastIndex) {
+      scriptVersionRegex.lastIndex++;
+    }
+    m.forEach((match) => {
+      recentMatch = match;
+    });
+  }
+  return recentMatch;
+}
 
 export default Component.extend({
   layout,
@@ -95,7 +146,9 @@ export default Component.extend({
     this._super(...arguments);
     this.set('_isLoading', true);
     if (!this.get('_config.tableau.eagerLoad')) {
-      await loadScript(`${this.get('_server')}/javascripts/api/tableau-2.min.js`);
+      const baseScript = await _makeGetRequest(`${this.get('_server')}/javascripts/api/tableau-2.min.js`);
+      const latestVersion = _getLatestVersionFromBaseScript(baseScript) || "tableau-2.min.js`";
+      await loadScript(`${this.get('_server')}/javascripts/api/${latestVersion}`);
     }
     this._dispose();
     const viewPath = this.get('viewPath') || `${this.get('workbook')}/${this.get('view')}`;
