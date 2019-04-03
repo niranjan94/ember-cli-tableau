@@ -51,6 +51,13 @@ export default Component.extend({
     return options;
   }),
 
+  /**
+   * Resize the tableau frame according to the holding element.
+   *
+   * @param width
+   * @param height
+   * @private
+   */
   _resize(width, height) {
     const viz = this.get('_vizInstance');
     const retryCount = this.get('_resizeRetryCount');
@@ -75,6 +82,10 @@ export default Component.extend({
     }
   },
 
+  /**
+   * Add certain tableau events to the created view.
+   * @private
+   */
   _addEvents() {
     const viz = this.get('_vizInstance');
     if (!viz) {
@@ -87,6 +98,11 @@ export default Component.extend({
     });
   },
 
+  /**
+   * Cleanup the tableau view from the element.
+   *
+   * @private
+   */
   _dispose() {
     const vizInstance = this.get('_vizInstance');
     if (vizInstance) {
@@ -94,16 +110,25 @@ export default Component.extend({
     }
   },
 
-  async didInsertElement() {
-    this._super(...arguments);
+  /**
+   * Load the tableau view into the element. Also, load tableau server library if not loaded already.
+   *
+   * @return {Promise<void>}
+   * @private
+   */
+  async _loadTableauView() {
     this.set('_isLoading', true);
-    if (!this.get('_config.tableau.eagerLoad') && (!window.tableau || window.tableau.Viz)) {
+    if (!this.get('_config.tableau.eagerLoad') && (!window.tableau || !window.tableau.Viz)) {
       await new EmberPromise(async(resolve, reject) => {
         try {
-          window.document.writeFn = window.document.write;
+          // Async-loaded scripts cannot make calls to document.write to load other scripts.
+          // So, a Hack to catch the call to document.write and get the url from there and then use that url to
+          // load the script directly.
+          window.document._writeFn = window.document.write;
           window.document.write = async (url) => {
+            // Restore the original document function ASAP.
+            window.document.write = window.document._writeFn;
             await loadScript(scriptTagRegex.exec(url)[1]);
-            window.document.write = window.document.writeFn;
             resolve()
           };
           await loadScript(`${this.get('_server')}/javascripts/api/tableau-2.min.js`);
@@ -118,24 +143,38 @@ export default Component.extend({
     if (this.get('token')) {
       url = `${this.get('_server')}/trusted/${this.get('token')}/views/${viewPath}`;
     }
-    this.set(
-      '_vizInstance',
-      new window.tableau.Viz(
-        this.get('element'),
-        url,
-        this.get('_options')
-      )
+    const _vizInstance = new window.tableau.Viz(
+      this.get('element'),
+      url,
+      this.get('_options')
     );
     this.setProperties({
-      _vizInstance: new window.tableau.Viz(
-        this.get('element'),
-        url,
-        this.get('_options')
-      ),
+      _vizInstance,
       _isLoading: false
-    })
+    });
   },
 
+  /**
+   * If any attributes are updated, ensure tableau view is reloaded.
+   */
+  didReceiveAttrs() {
+    this._super(...arguments);
+    if (this.get('element')) {
+      this._loadTableauView();
+    }
+  },
+
+  /**
+   * Load the tableau div on element insert.
+   */
+  didInsertElement() {
+    this._super(...arguments);
+    this._loadTableauView();
+  },
+
+  /**
+   * Cleanup the tableau view before destroying the element.
+   */
   willDestroyElement() {
     this._super(...arguments);
     this._dispose();
