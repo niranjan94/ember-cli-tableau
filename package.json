@@ -1,6 +1,6 @@
 {
   "name": "ember-cli-tableau",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Embed Tableau views in your Ember.js projects.",
   "keywords": [
     "ember-addon"
